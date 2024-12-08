@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عملتي ميلاف - التداول</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1f1f1f;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1.5em;
+            color: #00c853;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        .left-panel, .right-panel {
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            margin: 10px;
+        }
+        .left-panel {
+            flex: 2;
+            margin-right: 15px;
+        }
+        .right-panel {
+            flex: 1;
+            margin-left: 15px;
+        }
+        .chart-container {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #1f1f1f;
+            border-radius: 10px;
+            width: 90%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #444;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        .actions input {
+            width: 100px;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+        .actions button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #00c853, #1e88e5);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .actions button:hover {
+            background: linear-gradient(45deg, #1e88e5, #00c853);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    
+<div style="text-align: left; padding: 10px;">
+    <button onclick="switchLanguage('ar')" style="margin: 5px;">AR</button>
+    <button onclick="switchLanguage('en')" style="margin: 5px;">EN</button>
+    <button onclick="switchLanguage('fr')" style="margin: 5px;">FR</button>
+</div>
+<header>صفحة التداول - عملتي ميلاف</header>
+    <div class="chart-container">
+        <h2>مخطط تغير الأسعار</h2>
+        <canvas id="priceChart"></canvas>
+    </div>
+    <div class="container">
+        <div class="left-panel">
+            <h2>العملات الرقمية</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>العملة</th>
+                        <th>السعر</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>بيتكوين</td>
+                        <td id="btc-price">$24,000</td>
+                        <td class="actions">
+                            <input type="number" id="btc-amount" placeholder="الكمية">
+                            <button onclick="buyCrypto('btc')">شراء</button>
+                            <button onclick="sellCrypto('btc')">بيع</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>إيثريوم</td>
+                        <td id="eth-price">$1,800</td>
+                        <td class="actions">
+                            <input type="number" id="eth-amount" placeholder="الكمية">
+                            <button onclick="buyCrypto('eth')">شراء</button>
+                            <button onclick="sellCrypto('eth')">بيع</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>ريبل</td>
+                        <td id="xrp-price">$0.85</td>
+                        <td class="actions">
+                            <input type="number" id="xrp-amount" placeholder="الكمية">
+                            <button onclick="buyCrypto('xrp')">شراء</button>
+                            <button onclick="sellCrypto('xrp')">بيع</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="right-panel">
+            <h2>محفظتك</h2>
+            <p id="balance">الرصيد الكلي: $10,000</p>
+            <p id="btc-holdings">بيتكوين: 0.5</p>
+            <p id="eth-holdings">إيثريوم: 2</p>
+            <p id="xrp-holdings">ريبل: 100</p>
+        </div>
+    </div>
+
+    <script>
+        let balance = 10000;
+        let holdings = {
+            btc: 0.5,
+            eth: 2,
+            xrp: 100
+        };
+        let prices = {
+            btc: 24000,
+            eth: 1800,
+            xrp: 0.85
+        };
+
+        function buyCrypto(crypto) {
+            const amount = parseFloat(document.getElementById(crypto + '-amount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('الرجاء إدخال كمية صحيحة!');
+                return;
+            }
+            const cost = amount * prices[crypto];
+            if (cost > balance) {
+                alert('الرصيد غير كاف!');
+                return;
+            }
+            balance -= cost;
+            holdings[crypto] += amount;
+            updateUI();
+        }
+
+        function sellCrypto(crypto) {
+            const amount = parseFloat(document.getElementById(crypto + '-amount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('الرجاء إدخال كمية صحيحة!');
+                return;
+            }
+            if (amount > holdings[crypto]) {
+                alert('الكمية غير متوفرة!');
+                return;
+            }
+            const revenue = amount * prices[crypto];
+            balance += revenue;
+            holdings[crypto] -= amount;
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = 'الرصيد الكلي: $' + balance.toFixed(2);
+            document.getElementById('btc-holdings').innerText = 'بيتكوين: ' + holdings.btc.toFixed(4);
+            document.getElementById('eth-holdings').innerText = 'إيثريوم: ' + holdings.eth.toFixed(4);
+            document.getElementById('xrp-holdings').innerText = 'ريبل: ' + holdings.xrp.toFixed(4);
+        }
+
+        // تحديث الأسعار (كما هو موجود)
+        const labels = [];
+        const btcData = [];
+        const ethData = [];
+        const xrpData = [];
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'بيتكوين',
+                        data: btcData,
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'إيثريوم',
+                        data: ethData,
+                        borderColor: 'rgb(54, 162, 235)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'ريبل',
+                        data: xrpData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'الوقت'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'السعر (بالدولار)'
+                        }
+                    }
+                }
+            }
+        });
+
+        function updatePrices() {
+            const currentTime = new Date().toLocaleTimeString();
+            labels.push(currentTime);
+
+            // تحديث الأسعار بشكل عشوائي
+            for (let crypto in prices) {
+                const oldPrice = prices[crypto];
+                const change = (Math.random() * 2 - 1) * 0.05; // تغير عشوائي ±5%
+                prices[crypto] = (oldPrice * (1 + change)).toFixed(2);
+
+                if (crypto === 'btc') btcData.push(prices[crypto]);
+                if (crypto === 'eth') ethData.push(prices[crypto]);
+                if (crypto === 'xrp') xrpData.push(prices[crypto]);
+            }
+
+            // تحديث الرسم البياني
+            priceChart.update();
+        }
+
+        setInterval(updatePrices, 5000); // تحديث كل 5 ثوانٍ
+    </script>
+
+<script>
+    function switchLanguage(lang) {
+        alert('تم تغيير اللغة إلى: ' + lang.toUpperCase());
+        // You can implement real language switching logic here.
+    }
+</script>
+
+
+<script>
+    let currentLanguage = 'ar';
+
+    function switchLanguage(lang) {
+        currentLanguage = lang;
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        alert('تم تغيير اللغة إلى: ' + (lang === 'ar' ? 'العربية' : lang === 'en' ? 'English' : 'Français'));
+
+        // Update all text placeholders dynamically if needed (example)
+        // This requires additional localization logic based on your project setup.
+    }
+
+    function updateTablePrices() {
+        document.getElementById('btc-price').innerText = '$' + prices.btc;
+        document.getElementById('eth-price').innerText = '$' + prices.eth;
+        document.getElementById('xrp-price').innerText = '$' + prices.xrp;
+    }
+
+    // Update prices in the table whenever chart updates
+    setInterval(() => {
+        updatePrices();
+        updateTablePrices();
+    }, 5000); // Keep the same interval as chart update
+</script>
+
+
+<script>
+    const translations = {
+        ar: {
+            header: 'صفحة التداول - عملتي ميلاف',
+            chartTitle: 'مخطط تغير الأسعار',
+            digitalCurrencies: 'العملات الرقمية',
+            currency: 'العملة',
+            price: 'السعر',
+            actions: 'الإجراءات',
+            buy: 'شراء',
+            sell: 'بيع',
+            wallet: 'محفظتك',
+            totalBalance: 'الرصيد الكلي',
+            bitcoin: 'بيتكوين',
+            ethereum: 'إيثريوم',
+            ripple: 'ريبل'
+        },
+        en: {
+            header: 'Trading Page - Milaf Currency',
+            chartTitle: 'Price Change Chart',
+            digitalCurrencies: 'Digital Currencies',
+            currency: 'Currency',
+            price: 'Price',
+            actions: 'Actions',
+            buy: 'Buy',
+            sell: 'Sell',
+            wallet: 'Your Wallet',
+            totalBalance: 'Total Balance',
+            bitcoin: 'Bitcoin',
+            ethereum: 'Ethereum',
+            ripple: 'Ripple'
+        },
+        fr: {
+            header: 'Page de Trading - Devise Milaf',
+            chartTitle: 'Graphique des Variations de Prix',
+            digitalCurrencies: 'Devises Numériques',
+            currency: 'Devise',
+            price: 'Prix',
+            actions: 'Actions',
+            buy: 'Acheter',
+            sell: 'Vendre',
+            wallet: 'Votre Portefeuille',
+            totalBalance: 'Solde Total',
+            bitcoin: 'Bitcoin',
+            ethereum: 'Ethereum',
+            ripple: 'Ripple'
+        }
+    };
+
+    function switchLanguage(lang) {
+        currentLanguage = lang;
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+        // Update texts based on the selected language
+        document.querySelector('header').innerText = translations[lang].header;
+        document.querySelector('.chart-container h2').innerText = translations[lang].chartTitle;
+        document.querySelector('.left-panel h2').innerText = translations[lang].digitalCurrencies;
+        document.querySelector('.right-panel h2').innerText = translations[lang].wallet;
+
+        const tableHeaders = document.querySelectorAll('thead th');
+        tableHeaders[0].innerText = translations[lang].currency;
+        tableHeaders[1].innerText = translations[lang].price;
+        tableHeaders[2].innerText = translations[lang].actions;
+
+        const buyButtons = document.querySelectorAll('.actions button:first-child');
+        const sellButtons = document.querySelectorAll('.actions button:last-child');
+        buyButtons.forEach(button => button.innerText = translations[lang].buy);
+        sellButtons.forEach(button => button.innerText = translations[lang].sell);
+
+        const walletTexts = document.querySelectorAll('.right-panel p');
+        walletTexts[0].innerText = translations[lang].totalBalance + ': $' + balance.toFixed(2);
+        walletTexts[1].innerText = translations[lang].bitcoin + ': ' + holdings.btc.toFixed(4);
+        walletTexts[2].innerText = translations[lang].ethereum + ': ' + holdings.eth.toFixed(4);
+        walletTexts[3].innerText = translations[lang].ripple + ': ' + holdings.xrp.toFixed(4);
+    }
+</script>
+
+</body>
+</html>
